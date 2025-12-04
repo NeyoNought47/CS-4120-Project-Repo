@@ -5,10 +5,10 @@ from typing import Optional, Tuple, Any, Dict
 # Import model loaders
 from model_loader_mt5 import load_model as load_mt5_model, translate as translate_mt5
 from model_loader_rnn import load_model as load_rnn_model, Lang, translate as translate_rnn
-from model_loader_skipgram import load_model as load_skipgram_model, translate as translate_skipgram
+from model_loader_smt import load_model as load_smt_model, translate as translate_smt
 
 # Configuration
-MODEL_DIR = "saved_models"
+MODEL_DIR = "models"
 
 # Dialect mapping
 DIALECT_NAMES = {
@@ -32,7 +32,7 @@ DIALECT_NAMES = {
 MODEL_TYPES = {
     "MT5": "mt5",
     "RNN": "rnn",
-    "Skipgram": "skipgram"
+    "SMT": "smt"
 }
 
 # Global variables for model management
@@ -50,8 +50,8 @@ def get_model_filename(model_type: str, dialect_code: str) -> str:
         return "my_saved_mt5_model"
     elif model_type == "rnn":
         return f"model_es-{dialect_code}.pt" # rnn_
-    elif model_type == "skipgram":
-        return f"skipgram_model_es-{dialect_code}.pt"
+    elif model_type == "smt":
+        return f"es-{dialect_code}_ibm1.pkl"
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -63,7 +63,7 @@ def load_model_for_dialect(model_type: str, dialect_code: str) -> Tuple[Any, Opt
         Tuple of (model, tokenizer, input_lang, output_lang)
         For MT5: (model, tokenizer, None, None)
         For RNN: (model_dict, None, input_lang, output_lang)
-        For Skipgram: (model_dict, None, None, None)
+        For SMT: (model, None, None, None)
     """
     model_filename = get_model_filename(model_type, dialect_code)
     model_path = os.path.join(MODEL_DIR, model_filename)
@@ -74,9 +74,9 @@ def load_model_for_dialect(model_type: str, dialect_code: str) -> Tuple[Any, Opt
     elif model_type == "rnn":
         model_dict, input_lang, output_lang = load_rnn_model(model_path)
         return model_dict, None, input_lang, output_lang
-    elif model_type == "skipgram":
-        model_dict = load_skipgram_model(model_path)
-        return model_dict, None, None, None
+    elif model_type == "smt":
+        model = load_smt_model(model_path)
+        return model, None, None, None
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -100,9 +100,9 @@ def translate_text(text_en: str, model: Any, model_type: str,
         elif model_type == "rnn":
             # For RNN, model is a dict with encoder/decoder
             return translate_rnn(model, input_lang, output_lang, text_en)
-        elif model_type == "skipgram":
-            # For Skipgram, model is a dict
-            return translate_skipgram(model, text_en)
+        elif model_type == "smt":
+            # For SMT, model is an IBMModel1 instance
+            return translate_smt(model, text_en)
         else:
             return f"Unknown model type: {model_type}"
     except Exception as e:
@@ -179,7 +179,7 @@ with gr.Blocks(title="English to Spanish Dialect Translator") as demo:
         model_dropdown = gr.Dropdown(
             choices=list(MODEL_TYPES.keys()),
             label="Select Model Type",
-            value= "MT5",
+            value= "RNN",
             interactive=True
         )
         dialect_dropdown = gr.Dropdown(
@@ -234,7 +234,7 @@ with gr.Blocks(title="English to Spanish Dialect Translator") as demo:
     )
     
     gr.Markdown("### Instructions:")
-    gr.Markdown("- Select a model type (MT5, RNN, or Skipgram) from the dropdown")
+    gr.Markdown("- Select a model type (MT5, RNN, or SMT) from the dropdown")
     gr.Markdown("- Select a Spanish dialect from the dropdown")
     gr.Markdown("- Type your English text in the input box and press Enter or click Translate")
     gr.Markdown("- Changing the model type or dialect will reset the conversation")
