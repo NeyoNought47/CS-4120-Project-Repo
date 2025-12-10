@@ -9,6 +9,7 @@ This project is split into mainly 3 parts: data cleaning, model training, and in
 
 - In the project root, run:
   `run_preprocess.sh`
+  
   Or run separately:
   - `clean_es_en.py` → `split_es_en.py` → `train_sentencepiece.py` → `encode_es_en.py`
 
