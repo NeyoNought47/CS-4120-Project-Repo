@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e   # 遇到错误立即退出
+set -e
 
 echo "Step 1: Cleaning..."
 python clean_es_en.py
